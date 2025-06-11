@@ -29,13 +29,13 @@ jobs:
       run: zip -r site.zip .
       working-directory: ${{ env.WORKING_DIR }}
 
-    - name: Deploy to Azure Web App
+      - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: Bots-app                       # ← EXACTO como en profileName
-        slot-name: Production
+        app-name: Bots-app                    # ← tal cual en profileName
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISHPROFILE }}
         package: ${{ env.WORKING_DIR }}/site.zip
+
 
 
 

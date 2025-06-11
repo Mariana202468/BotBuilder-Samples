@@ -1,33 +1,66 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
+const { ActivityHandler } = require('botbuilder');
 
-// @ts-check
+// ⬇⬇  SDK de Voz
+const speech = require('microsoft-cognitiveservices-speech-sdk');
 
-const { ActivityHandler, MessageFactory } = require('botbuilder');
+// Configuración de voz (usa las variables de entorno que ya agregaste)
+const speechCfg = speech.SpeechConfig.fromSubscription(
+  process.env.SPEECH_KEY,
+  process.env.SPEECH_REGION
+);
+speechCfg.speechSynthesisVoiceName = 'es-CO-SalomeNeural';  // voz colombiana
+
+// Función auxiliar: devuelve un Buffer WAV
+async function synthesize(text) {
+  return new Promise((resolve, reject) => {
+    const synthesizer = new speech.SpeechSynthesizer(speechCfg);
+    synthesizer.speakTextAsync(
+      text,
+      result => resolve(Buffer.from(result.audioData)),
+      err   => reject(err)
+    );
+  });
+}
 
 class EchoBot extends ActivityHandler {
-    constructor() {
-        super();
-        // See https://aka.ms/about-bot-activity-message to learn more about the message and other activity types.
-        this.onMessage(async (context, next) => {
-            const replyText = `Echo: ${ context.activity.text }`;
-            await context.sendActivity(MessageFactory.text(replyText, replyText));
-            // By calling next() you ensure that the next BotHandler is run.
-            await next();
-        });
+  constructor() {
+    super();
 
-        this.onMembersAdded(async (context, next) => {
-            const membersAdded = context.activity.membersAdded ?? [];
-            const welcomeText = 'Hello and welcome!';
-            for (let cnt = 0; cnt < membersAdded.length; ++cnt) {
-                if (membersAdded[cnt].id !== context.activity.recipient.id) {
-                    await context.sendActivity(MessageFactory.text(welcomeText, welcomeText));
-                }
-            }
-            // By calling next() you ensure that the next BotHandler is run.
-            await next();
-        });
-    }
+    // Evento mensaje
+    this.onMessage(async (context, next) => {
+      const userText = context.activity.text;
+
+      // 1) síntesis
+      const audioBuffer = await synthesize(userText);
+
+      // 2) envía texto + audio
+      await context.sendActivity({
+        text: userText,
+        attachments: [{
+          contentType: 'audio/wav',
+          contentUrl: `data:audio/wav;base64,${audioBuffer.toString('base64')}`,
+          name: 'respuesta.wav'
+        }]
+      });
+      await next();
+    });
+
+    // Evento conversación iniciada
+    this.onMembersAdded(async (context, next) => {
+      const welcome = '¡Hola! Soy Ceci. Escríbeme algo y te responderé con voz.';
+      const audioBuffer = await synthesize(welcome);
+      await context.sendActivity({
+        text: welcome,
+        attachments: [{
+          contentType: 'audio/wav',
+          contentUrl: `data:audio/wav;base64,${audioBuffer.toString('base64')}`,
+          name: 'bienvenida.wav'
+        }]
+      });
+      await next();
+    });
+  }
 }
 
 module.exports.EchoBot = EchoBot;
+

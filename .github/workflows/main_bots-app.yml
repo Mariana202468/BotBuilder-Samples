@@ -1,15 +1,12 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and Deploy Echo Bot to Azure Web App
 
 on:
   push:
-    branches: [ "main" ]        # se ejecuta en cada commit a main
+    branches: [ "main" ]
 
 env:
-  NODE_VERSION: "20.x"                                  # Node 20 estable
-  WORKING_DIR: "samples/javascript_nodejs/02.echo-bot"  # carpeta del ejemplo
+  NODE_VERSION: "20.x"
+  WORKING_DIR: "samples/javascript_nodejs/02.echo-bot"
 
 jobs:
   build-deploy:
@@ -19,7 +16,7 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v4
 
-    - name: Setup Node ${{ env.NODE_VERSION }}
+    - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
@@ -35,12 +32,10 @@ jobs:
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: bots-app-bndmdkarffhyceb6        # ← nombre EXACTO de tu Web App
+        app-name: Bots-app                       # ← EXACTO como en profileName
         slot-name: Production
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISHPROFILE }}
-        package: ${{ env.WORKING_DIR }}/site.zip   # ruta correcta del ZIP
-
-
+        package: ${{ env.WORKING_DIR }}/site.zip
 
 
 

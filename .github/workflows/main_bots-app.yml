@@ -2,39 +2,50 @@ name: Build and Deploy Echo Bot to Azure Web App
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main" ]      # Ejecuta en cada commit a main
 
 env:
   NODE_VERSION: "20.x"
-  WORKING_DIR: "samples/javascript_nodejs/02.echo-bot"
+  WORKING_DIR: "samples/javascript_nodejs/02.echo-bot"   # Carpeta del ejemplo
 
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
 
     steps:
+    # 1. Obtener código
     - name: Checkout repo
       uses: actions/checkout@v4
 
+    # 2. Preparar Node
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
 
+    # 3. Instalar dependencias
     - name: Install dependencies
       run: npm install
       working-directory: ${{ env.WORKING_DIR }}
 
+    # 4. Empaquetar el sitio
     - name: Compress site
       run: zip -r site.zip .
       working-directory: ${{ env.WORKING_DIR }}
 
-      - name: Deploy to Azure Web App
+    # 5. Iniciar sesión en Azure con OIDC
+    - name: Azure login (OIDC)
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # 6. Desplegar a la Web App
+    - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: Bots-app                    
-        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISHPROFILE }}
+        app-name: Bots-app                     # ← EXACTO como aparece en el portal
         package: ${{ env.WORKING_DIR }}/site.zip
+
 
 
 
